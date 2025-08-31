@@ -19,7 +19,7 @@ cp train-llama-elastic.sh /mnt-fsx/mgtlm_workspace/Megatron-LM/
 
 ### 3. 任务启动
 ```sh
-kubectl apply -f deploy-megatron.yaml
+kubectl apply -f launch-task.yaml
 
 kubectl get trainjob megatron-multinode
 kubectl get pods -l training.kubeflow.org/job-name=megatron-multinode
