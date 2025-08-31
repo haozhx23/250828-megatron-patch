@@ -19,6 +19,8 @@ spec:
           spec:
             template:
               spec:
+                nodeSelector:
+                  node.kubernetes.io/instance-type: "p6-b200.48xlarge"
                 volumes:
                 - name: fsx-storage
                   persistentVolumeClaim:
@@ -26,10 +28,10 @@ spec:
                 - name: shared-memory
                   emptyDir:
                     medium: Memory
-                    sizeLimit: 2Gi
+                    sizeLimit: 8Gi
                 containers:
                 - name: node
-                  image: 633205212955.dkr.ecr.us-west-2.amazonaws.com/nvcr-2503-efa-mg0140:latest
+                  image: public.ecr.aws/t5u4s6i0/nvcr-2503-efa-mg0140:latest
                   workingDir: /workspace/megatron-lm
                   volumeMounts:
                   # Megatron-LM 代码目录
@@ -53,14 +55,20 @@ spec:
                     mountPath: /dev/shm
                   resources:
                     requests:
-                      nvidia.com/gpu: 4
-                      vpc.amazonaws.com/efa: 1
+                      nvidia.com/gpu: 8
+                      vpc.amazonaws.com/efa: 8
                     limits:
-                      nvidia.com/gpu: 4
-                      vpc.amazonaws.com/efa: 1
+                      nvidia.com/gpu: 8
+                      vpc.amazonaws.com/efa: 8
                   env:
                   - name: NCCL_DEBUG
                     value: "INFO"
+                  # - name: FI_EFA_USE_DEVICE_RDMA
+                  #   value: "1"
+                  # - name: FI_PROVIDER
+                  #   value: "efa"
+                  # - name: FI_LOG_LEVEL
+                  #   value: "warn"
 ---
 apiVersion: trainer.kubeflow.org/v1alpha1
 kind: TrainJob
@@ -69,8 +77,8 @@ metadata:
 spec:
   trainer:
     numNodes: 2
-    numProcPerNode: 4
-    image: 633205212955.dkr.ecr.us-west-2.amazonaws.com/nvcr-2503-efa-mg0140:latest
+    numProcPerNode: 8
+    image: public.ecr.aws/t5u4s6i0/nvcr-2503-efa-mg0140:latest
     command:
       - "bash"
       - "train-llama-elastic.sh"
@@ -82,13 +90,19 @@ spec:
     # Megatron 环境变量
     - name: NCCL_DEBUG
       value: "INFO"
+    - name: FI_EFA_USE_DEVICE_RDMA
+      value: "1"
+    - name: FI_PROVIDER
+      value: "efa"
+    - name: FI_LOG_LEVEL
+      value: "warn"
     resourcesPerNode:
       requests:
-        nvidia.com/gpu: 4
-        vpc.amazonaws.com/efa: 1
+        nvidia.com/gpu: 8
+        vpc.amazonaws.com/efa: 8
       limits:
-        nvidia.com/gpu: 4
-        vpc.amazonaws.com/efa: 1
+        nvidia.com/gpu: 8
+        vpc.amazonaws.com/efa: 8
   runtimeRef:
     name: torch-distributed-megatron
     apiGroup: trainer.kubeflow.org

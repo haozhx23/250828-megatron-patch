@@ -45,21 +45,19 @@ mkdir -p "$(dirname "$DATA_CACHE_PATH")"
 
 # Kubeflow envs
 echo "PET_NNODES: $PET_NNODES"
+echo "PET_NPROC_PER_NODE: $PET_NPROC_PER_NODE"
 echo "PET_NODE_RANK: $PET_NODE_RANK"
 echo "PET_MASTER_ADDR: $PET_MASTER_ADDR"
 echo "PET_MASTER_PORT: $PET_MASTER_PORT"
-echo "PET_NPROC_PER_NODE: $PET_NPROC_PER_NODE"
 echo "JOBSET_NAME:" $JOBSET_NAME
 
 DISTRIBUTED_ARGS=(
-    --nproc_per_node $PET_NPROC_PER_NODE
     --nnodes $PET_NNODES
+    --nproc_per_node $PET_NPROC_PER_NODE
     --node_rank $PET_NODE_RANK
     --master_addr $PET_MASTER_ADDR
     --master_port $PET_MASTER_PORT
 )
-
-
 
 PRETRAIN_SCRIPT_PATH="pretrain_gpt.py"
 
@@ -68,7 +66,7 @@ TP_SIZE=4
 CP_SIZE=2     
 PP_SIZE=1     
 MICRO_BATCH_SIZE=1
-GLOBAL_BATCH_SIZE=2
+GLOBAL_BATCH_SIZE=32
 NUM_LAYERS=32  
 DTYPE="fp8"
 SEQ_LENGTH=8192
