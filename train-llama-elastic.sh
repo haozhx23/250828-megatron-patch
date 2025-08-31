@@ -27,13 +27,39 @@ mkdir -p "$(dirname "$CHECKPOINT_PATH")"
 mkdir -p "$(dirname "$TENSORBOARD_LOGS_PATH")"
 mkdir -p "$(dirname "$DATA_CACHE_PATH")"
 
-# Distributed training setup
-GPUS_PER_NODE=8
-NUM_NODES=${NUM_NODES:-1}
-MASTER_ADDR=${MASTER_ADDR:-localhost}
-MASTER_PORT=${MASTER_PORT:-6000}
-NODE_RANK=${NODE_RANK:-0}
-#WORLD_SIZE=$(($GPUS_PER_NODE*$NUM_NODES))
+# # Distributed training setup
+# GPUS_PER_NODE=8
+# NUM_NODES=${NUM_NODES:-1}
+# MASTER_ADDR=${MASTER_ADDR:-localhost}
+# MASTER_PORT=${MASTER_PORT:-6000}
+# NODE_RANK=${NODE_RANK:-0}
+# #WORLD_SIZE=$(($GPUS_PER_NODE*$NUM_NODES))
+
+# DISTRIBUTED_ARGS=(
+#     --nnodes=$NUM_NODES
+#     --nproc-per-node=$GPUS_PER_NODE
+#     --rdzv-id=mgt-test
+#     --rdzv-backend=c10d
+#     --rdzv-endpoint=$MASTER_ADDR:$MASTER_PORT
+# )
+
+# Kubeflow envs
+echo "PET_NNODES: $PET_NNODES"
+echo "PET_NODE_RANK: $PET_NODE_RANK"
+echo "PET_MASTER_ADDR: $PET_MASTER_ADDR"
+echo "PET_MASTER_PORT: $PET_MASTER_PORT"
+echo "PET_NPROC_PER_NODE: $PET_NPROC_PER_NODE"
+echo "JOBSET_NAME:" $JOBSET_NAME
+
+DISTRIBUTED_ARGS=(
+    --nproc_per_node $PET_NPROC_PER_NODE
+    --nnodes $PET_NNODES
+    --node_rank $PET_NODE_RANK
+    --master_addr $PET_MASTER_ADDR
+    --master_port $PET_MASTER_PORT
+)
+
+
 
 PRETRAIN_SCRIPT_PATH="pretrain_gpt.py"
 
@@ -48,13 +74,6 @@ DTYPE="fp8"
 SEQ_LENGTH=8192
 MAX_POSITION_EMBEDDINGS=8192
 
-DISTRIBUTED_ARGS=(
-    --nnodes=$NUM_NODES
-    --nproc-per-node=$GPUS_PER_NODE
-    --rdzv-id=mgt-test
-    --rdzv-backend=c10d
-    --rdzv-endpoint=$MASTER_ADDR:$MASTER_PORT
-)
 
 MODEL_ARGS=(
     --use-mcore-models

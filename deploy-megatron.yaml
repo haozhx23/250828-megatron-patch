@@ -1,0 +1,95 @@
+apiVersion: trainer.kubeflow.org/v1alpha1
+kind: ClusterTrainingRuntime
+metadata:
+  name: torch-distributed-megatron
+spec:
+  mlPolicy:
+    numNodes: 1
+    torch:
+      numProcPerNode: auto
+  template:
+    spec:
+      replicatedJobs:
+      - name: node
+        replicas: 1
+        template:
+          metadata:
+            labels:
+              trainer.kubeflow.org/trainjob-ancestor-step: trainer
+          spec:
+            template:
+              spec:
+                volumes:
+                - name: fsx-storage
+                  persistentVolumeClaim:
+                    claimName: fsx-claim
+                - name: shared-memory
+                  emptyDir:
+                    medium: Memory
+                    sizeLimit: 2Gi
+                containers:
+                - name: node
+                  image: 633205212955.dkr.ecr.us-west-2.amazonaws.com/nvcr-2503-efa-mg0140:latest
+                  workingDir: /workspace/megatron-lm
+                  volumeMounts:
+                  # Megatron-LM 代码目录
+                  - name: fsx-storage
+                    mountPath: /workspace/megatron-lm
+                    subPath: mgtlm_workspace/Megatron-LM
+                  # Checkpoints 目录
+                  - name: fsx-storage
+                    mountPath: /workspace/checkpoints
+                    subPath: mgtlm_workspace/checkpoints
+                  # TensorBoard 日志目录
+                  - name: fsx-storage
+                    mountPath: /workspace/tensorboard_logs
+                    subPath: mgtlm_workspace/tensorboard_logs
+                  # 数据集目录
+                  - name: fsx-storage
+                    mountPath: /workspace/built_datasets
+                    subPath: mgtlm_workspace/built_datasets
+                  # 共享内存
+                  - name: shared-memory
+                    mountPath: /dev/shm
+                  resources:
+                    requests:
+                      nvidia.com/gpu: 4
+                      vpc.amazonaws.com/efa: 1
+                    limits:
+                      nvidia.com/gpu: 4
+                      vpc.amazonaws.com/efa: 1
+                  env:
+                  - name: NCCL_DEBUG
+                    value: "INFO"
+---
+apiVersion: trainer.kubeflow.org/v1alpha1
+kind: TrainJob
+metadata:
+  name: megatron-multinode
+spec:
+  trainer:
+    numNodes: 2
+    numProcPerNode: 4
+    image: 633205212955.dkr.ecr.us-west-2.amazonaws.com/nvcr-2503-efa-mg0140:latest
+    command:
+      - "bash"
+      - "train-llama-elastic.sh"
+    env:
+    - name: JOBSET_NAME
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.labels['jobset.sigs.k8s.io/jobset-name']
+    # Megatron 环境变量
+    - name: NCCL_DEBUG
+      value: "INFO"
+    resourcesPerNode:
+      requests:
+        nvidia.com/gpu: 4
+        vpc.amazonaws.com/efa: 1
+      limits:
+        nvidia.com/gpu: 4
+        vpc.amazonaws.com/efa: 1
+  runtimeRef:
+    name: torch-distributed-megatron
+    apiGroup: trainer.kubeflow.org
+    kind: ClusterTrainingRuntime
