@@ -1,8 +1,8 @@
 
 
-wget -O Dockerfile https://raw.githubusercontent.com/aws-samples/awsome-distributed-training/refs/heads/main/3.test_cases/megatron/megatron-lm/aws-megatron-lm.Dockerfile
+# wget -O Dockerfile https://raw.githubusercontent.com/aws-samples/awsome-distributed-training/refs/heads/main/3.test_cases/megatron/megatron-lm/aws-megatron-lm.Dockerfile
 
-sed -i 's/core_v0.12.1/core_r0.14.0/' Dockerfile
+# sed -i 's/core_v0.12.1/core_r0.14.0/' Dockerfile
 
 algorithm_name=nvcr-2506-efa-mg0140-ttt
 

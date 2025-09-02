@@ -1,0 +1,99 @@
+apiVersion: trainer.kubeflow.org/v1alpha1
+kind: ClusterTrainingRuntime
+metadata:
+  name: torch-distributed-torchtitan
+spec:
+  mlPolicy:
+    numNodes: 1
+    torch:
+      numProcPerNode: auto
+  template:
+    spec:
+      replicatedJobs:
+      - name: node
+        replicas: 1
+        template:
+          metadata:
+            labels:
+              trainer.kubeflow.org/trainjob-ancestor-step: trainer
+          spec:
+            template:
+              spec:
+                nodeSelector:
+                  # node.kubernetes.io/instance-type: "p6-b200.48xlarge"
+                  node.kubernetes.io/instance-type: "g6e.12xlarge"
+                volumes:
+                - name: fsx-storage
+                  persistentVolumeClaim:
+                    claimName: fsx-claim
+                - name: shared-memory
+                  emptyDir:
+                    medium: Memory
+                    sizeLimit: 8Gi
+                containers:
+                - name: node
+                  image: 633205212955.dkr.ecr.us-west-2.amazonaws.com/nvcr-2506-efa-mg0140-ttt:latest
+                  workingDir: /workspace/torchtitan
+                  volumeMounts:
+                  - name: fsx-storage
+                    mountPath: /workspace/torchtitan
+                    subPath: ttt_workspace/torchtitan
+                  - name: fsx-storage
+                    mountPath: /workspace/checkpoints
+                    subPath: ttt_workspace/checkpoints
+                  - name: fsx-storage
+                    mountPath: /workspace/logs
+                    subPath: ttt_workspace/logs
+                  - name: shared-memory
+                    mountPath: /dev/shm
+                  resources:
+                    requests:
+                      nvidia.com/gpu: 1
+                      vpc.amazonaws.com/efa: 1
+                    limits:
+                      nvidia.com/gpu: 1
+                      vpc.amazonaws.com/efa: 1
+                  env:
+                  - name: NCCL_DEBUG
+                    value: "INFO"
+                  # - name: PYTORCH_ALLOC_CONF
+                  #   value: "expandable_segments:True"
+---
+apiVersion: trainer.kubeflow.org/v1alpha1
+kind: TrainJob
+metadata:
+  name: torchtitan-multinode
+spec:
+  trainer:
+    numNodes: 2
+    numProcPerNode: 4
+    image: 633205212955.dkr.ecr.us-west-2.amazonaws.com/nvcr-2506-efa-mg0140-ttt:latest
+    command:
+      - "bash"
+      - "torchtitan-train-kfv2-dist.sh"
+    env:
+    - name: JOBSET_NAME
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.labels['jobset.sigs.k8s.io/jobset-name']
+    - name: NCCL_DEBUG
+      value: "INFO"
+    # - name: PYTORCH_ALLOC_CONF
+    #   value: "expandable_segments:True"
+    # - name: CONFIG_FILE
+    #   value: "./torchtitan/models/llama3/train_configs/debug_model.toml"
+    # - name: TRAIN_FILE
+    #   value: "torchtitan.train"
+    - name: LOG_RANK
+      value: "0"
+    resourcesPerNode:
+      requests:
+        nvidia.com/gpu: 4
+        vpc.amazonaws.com/efa: 1
+      limits:
+        nvidia.com/gpu: 4
+        vpc.amazonaws.com/efa: 1
+  runtimeRef:
+    name: torch-distributed-torchtitan
+    apiGroup: trainer.kubeflow.org
+    kind: ClusterTrainingRuntime
