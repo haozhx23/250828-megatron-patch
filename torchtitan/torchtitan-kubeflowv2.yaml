@@ -32,7 +32,7 @@ spec:
                     sizeLimit: 8Gi
                 containers:
                 - name: node
-                  image: 633205212955.dkr.ecr.us-west-2.amazonaws.com/nvcr-2506-efa-mg0140-ttt:latest
+                  image: 633205212955.dkr.ecr.us-west-2.amazonaws.com/aws-dlc-base-ttt:latest
                   workingDir: /workspace/torchtitan
                   volumeMounts:
                   - name: fsx-storage
@@ -67,7 +67,7 @@ spec:
   trainer:
     numNodes: 2
     numProcPerNode: 4
-    image: 633205212955.dkr.ecr.us-west-2.amazonaws.com/nvcr-2506-efa-mg0140-ttt:latest
+    image: 633205212955.dkr.ecr.us-west-2.amazonaws.com/aws-dlc-base-ttt:latest
     command:
       - "bash"
       - "torchtitan-train-kfv2-dist.sh"

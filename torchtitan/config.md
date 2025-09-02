@@ -1,5 +1,10 @@
 
-## torchtitan
+## (Optional) build image
+```
+./build-image-ttt.sh
+```
+
+## Set environment
 ```
 FSX_MOUNT_PATH=/your-prefix/fsx-mount-path/
 cd $FSX_MOUNT_PATH

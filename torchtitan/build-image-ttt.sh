@@ -4,7 +4,7 @@
 
 # sed -i 's/core_v0.12.1/core_r0.14.0/' Dockerfile
 
-algorithm_name=nvcr-2506-efa-mg0140-ttt
+algorithm_name=aws-dlc-base-ttt
 
 TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600" -s)
 region=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" -s http://169.254.169.254/latest/meta-data/placement/region)
