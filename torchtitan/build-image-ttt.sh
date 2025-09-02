@@ -11,6 +11,9 @@ region=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" -s http://169.254.169.254/la
 # region=$(aws configure get region)
 account=$(aws sts get-caller-identity --query Account --output text)
 
+aws ecr get-login-password --region ${region}|docker login --username AWS --password-stdin "763104351884.dkr.ecr.${region}.amazonaws.com"
+
+
 aws ecr describe-repositories --region $region --repository-names "${algorithm_name}" > /dev/null 2>&1
 if [ $? -ne 0 ]
 then
